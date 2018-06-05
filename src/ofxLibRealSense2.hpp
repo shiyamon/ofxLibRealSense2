@@ -23,6 +23,8 @@ public:
     void update();
     void exit();
     
+    int getDeviceCount();
+    
     ofTexture*  getColorTex()   { return &_colTex; }
     ofTexture*  getIrTex()      { return &_irTex; }
     ofTexture*  getDepthTex()   { return &_depthTex; }

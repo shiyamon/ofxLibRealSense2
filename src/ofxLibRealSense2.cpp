@@ -11,6 +11,13 @@
 
 using namespace::std;
 
+int ofxLibRealSense2::getDeviceCount()
+{
+    // query device
+    rs2::context ctx;
+    return ctx.query_devices().size();
+}
+
 
 void ofxLibRealSense2::setupDevice(int deviceID)
 {
