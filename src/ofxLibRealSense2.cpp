@@ -61,7 +61,7 @@ void ofxLibRealSense2::setupIR(int width, int height, int fps)
     _irWidth = width;
     _irHeight = height;
     _irTex.allocate(_irWidth, _irHeight, GL_LUMINANCE);
-    _config.enable_stream(RS2_STREAM_INFRARED, -1, _irWidth, _irHeight, RS2_FORMAT_Y8, fps);
+    _config.enable_stream(RS2_STREAM_INFRARED, 1, _irWidth, _irHeight, RS2_FORMAT_Y8, fps);
     _irEnabled = true;
 }
 
@@ -167,7 +167,7 @@ void ofxLibRealSense2::setupGUI()
     _D400Params.setup("D400");
     _D400Params.add( _autoExposure.setup("Auto exposure", true) );
     _D400Params.add( _enableEmitter.setup("Emitter", true) );
-    _D400Params.add( _irExposure.setup("IR Exposure", orExp.def, orExp.min, orExp.max ));
+    _D400Params.add( _irExposure.setup("IR Exposure", orExp.def, orExp.min, 26000 ));
     
     _autoExposure.addListener(this, &ofxLibRealSense2::onD400BoolParamChanged);
     _enableEmitter.addListener(this, &ofxLibRealSense2::onD400BoolParamChanged);
