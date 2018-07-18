@@ -28,11 +28,13 @@ void ofxLibRealSense2::setupDevice(int deviceID)
     
     if(_deviceList.size() <= 0) {
         ofSystemAlertDialog("RealSense device not found!");
-        std::exit(0);
+        return;
+//        std::exit(0);
     }
     if (deviceID >= _deviceList.size()) {
         ofSystemAlertDialog("Requested device id is invalid");
-        std::exit(0);
+        return;
+//        std::exit(0);
     }
     
     string deviceSerial = _deviceList[deviceID].get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
@@ -78,6 +80,8 @@ void ofxLibRealSense2::setupDepth(int width, int height, int fps)
 
 void ofxLibRealSense2::startPipeline(bool useThread)
 {
+    if(!_setupFinished) return;
+    
 //    _config.enable_device(_device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
     _pipeline.start(_config);
     _pipelineStarted=true;
