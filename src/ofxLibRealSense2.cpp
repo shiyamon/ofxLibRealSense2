@@ -29,12 +29,10 @@ void ofxLibRealSense2::setupDevice(int deviceID)
     if(_deviceList.size() <= 0) {
         ofSystemAlertDialog("RealSense device not found!");
         return;
-//        std::exit(0);
     }
     if (deviceID >= _deviceList.size()) {
         ofSystemAlertDialog("Requested device id is invalid");
         return;
-//        std::exit(0);
     }
     
     string deviceSerial = _deviceList[deviceID].get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
@@ -72,8 +70,10 @@ void ofxLibRealSense2::setupDepth(int width, int height, int fps)
 {
     _depthWidth = width;
     _depthHeight = height;
-    _depthTex.allocate(_depthWidth, _depthHeight, GL_LUMINANCE);
+    _depthTex.allocate(_depthWidth, _depthHeight, GL_RGB);
+    _rawDepthTex.allocate(_depthWidth, _depthHeight, GL_LUMINANCE16);
     _config.enable_stream(RS2_STREAM_DEPTH, -1, _depthWidth, _depthHeight, RS2_FORMAT_Z16, fps);
+    _colorizer.set_option(RS2_OPTION_COLOR_SCHEME, 2);
     _depthEnabled = true;
 }
 
@@ -125,7 +125,11 @@ void ofxLibRealSense2::updateFrameData()
         }
         if(_depthEnabled) {
             rs2::depth_frame depthFrame = frameset.get_depth_frame();
-            _depthBuff = (uint16_t*)depthFrame.get_data();
+            _rawDepthBuff = (uint16_t*)depthFrame.get_data();
+            
+            rs2::video_frame normalizedDepthFrame = _colorizer(depthFrame);
+            _depthBuff = (uint8_t*)normalizedDepthFrame.get_data();
+            
             _depthWidth = depthFrame.get_width();
             _depthHeight = depthFrame.get_height();
             _hasNewDepth = true;
@@ -146,7 +150,8 @@ void ofxLibRealSense2::update()
     _hasNewFrame = _hasNewColor | _hasNewIr | _hasNewDepth;
 
     if(_depthBuff && _hasNewDepth) {
-        _depthTex.loadData(_depthBuff, _depthWidth, _depthHeight, GL_LUMINANCE);
+        _rawDepthTex.loadData(_rawDepthBuff, _depthWidth, _depthHeight, GL_LUMINANCE);
+        _depthTex.loadData(_depthBuff, _depthWidth, _depthHeight, GL_RGB);
         _hasNewDepth = false;
     }
 
@@ -167,15 +172,21 @@ void ofxLibRealSense2::setupGUI()
     rs2::sensor sensor = _deviceList[_curDeviceID].query_sensors()[0];
     rs2::option_range orExp = sensor.get_option_range(RS2_OPTION_EXPOSURE);
     rs2::option_range orGain = sensor.get_option_range(RS2_OPTION_GAIN);
+    rs2::option_range orMinDist = _colorizer.get_option_range(RS2_OPTION_MIN_DISTANCE);
+    rs2::option_range orMaxDist = _colorizer.get_option_range(RS2_OPTION_MAX_DISTANCE);
 
     _D400Params.setup("D400");
     _D400Params.add( _autoExposure.setup("Auto exposure", true) );
     _D400Params.add( _enableEmitter.setup("Emitter", true) );
     _D400Params.add( _irExposure.setup("IR Exposure", orExp.def, orExp.min, 26000 ));
+    _D400Params.add( _depthMin.setup("Min Depth", orMinDist.def, orMinDist.min, orMinDist.max));
+    _D400Params.add( _depthMax.setup("Max Depth", orMaxDist.def, orMaxDist.min, orMaxDist.max));
     
     _autoExposure.addListener(this, &ofxLibRealSense2::onD400BoolParamChanged);
     _enableEmitter.addListener(this, &ofxLibRealSense2::onD400BoolParamChanged);
     _irExposure.addListener(this, &ofxLibRealSense2::onD400IntParamChanged);
+    _depthMin.addListener(this, &ofxLibRealSense2::onD400ColorizerParamChanged);
+    _depthMax.addListener(this, &ofxLibRealSense2::onD400ColorizerParamChanged);
 }
 
 
@@ -196,6 +207,18 @@ void ofxLibRealSense2::onD400IntParamChanged(int &value)
     rs2::sensor sensor = _pipeline.get_active_profile().get_device().first<rs2::depth_sensor>();
     if(sensor.supports(RS2_OPTION_EXPOSURE))
         sensor.set_option(RS2_OPTION_EXPOSURE, (float)_irExposure);
+}
+
+
+void ofxLibRealSense2::onD400ColorizerParamChanged(float &value)
+{
+    if(!_pipelineStarted) return;
+    _colorizer.set_option(RS2_OPTION_HISTOGRAM_EQUALIZATION_ENABLED, 0);
+    
+    if(_colorizer.supports(RS2_OPTION_MIN_DISTANCE))
+        _colorizer.set_option(RS2_OPTION_MIN_DISTANCE, _depthMin);
+    if(_colorizer.supports(RS2_OPTION_MAX_DISTANCE))
+        _colorizer.set_option(RS2_OPTION_MAX_DISTANCE, _depthMax);
 }
 
 
