@@ -102,12 +102,11 @@ namespace rs2
             return _pipeline_profile != nullptr;
         }
 
-    private:
+        explicit operator std::shared_ptr<rs2_pipeline_profile>() { return _pipeline_profile; }
         pipeline_profile(std::shared_ptr<rs2_pipeline_profile> profile) :
-            _pipeline_profile(profile)
-        {
-
-        }
+            _pipeline_profile(profile){}
+    private:
+        
         std::shared_ptr<rs2_pipeline_profile> _pipeline_profile;
         friend class config;
         friend class pipeline;
@@ -204,7 +203,7 @@ namespace rs2
         * This method is required if the application needs to set device or sensor settings prior to pipeline streaming,
         * to enforce the pipeline to use the configured device.
         *
-        * \param[in] Serial device serial number, as returned by RS2_CAMERA_INFO_SERIAL_NUMBER
+        * \param[in] serial device serial number, as returned by RS2_CAMERA_INFO_SERIAL_NUMBER
         */
         void enable_device(const std::string& serial)
         {
@@ -316,12 +315,14 @@ namespace rs2
         {
             return _config;
         }
-    private:
-        config(std::shared_ptr<rs2_config> config) : _config(config)
+        explicit operator std::shared_ptr<rs2_config>() const
         {
+            return _config;
         }
-        std::shared_ptr<rs2_config> _config;
 
+        config(std::shared_ptr<rs2_config> config) : _config(config) {}
+    private:
+        std::shared_ptr<rs2_config> _config;
     };
 
     /**
@@ -343,7 +344,6 @@ namespace rs2
         * \param[in] ctx   The context allocated by the application. Using the platform context by default.
         */
         pipeline(context ctx = context())
-            : _ctx(ctx)
         {
             rs2_error* e = nullptr;
             _pipeline = std::shared_ptr<rs2_pipeline>(
@@ -471,6 +471,20 @@ namespace rs2
             return res > 0;
         }
 
+        bool try_wait_for_frames(frameset* f, unsigned int timeout_ms = 5000) const
+        {
+            if (!f)
+            {
+                throw std::invalid_argument("null frameset");
+            }
+            rs2_error* e = nullptr;
+            rs2_frame* frame_ref = nullptr;
+            auto res = rs2_pipeline_try_wait_for_frames(_pipeline.get(), &frame_ref, timeout_ms, &e);
+            error::handle(e);
+            if (res) *f = frameset(frame(frame_ref));
+            return res > 0;
+        }
+
         /**
         * Return the active device and streams profiles, used by the pipeline.
         * The pipeline streams profiles are selected during \c start(). The method returns a valid result only when the pipeline is active -
@@ -495,9 +509,9 @@ namespace rs2
         {
             return _pipeline;
         }
+        explicit pipeline(std::shared_ptr<rs2_pipeline> ptr) : _pipeline(ptr) {}
 
     private:
-        context _ctx;
         std::shared_ptr<rs2_pipeline> _pipeline;
         friend class config;
     };

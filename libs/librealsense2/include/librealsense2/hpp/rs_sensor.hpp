@@ -9,6 +9,7 @@
 
 namespace rs2
 {
+
     class notification
     {
     public:
@@ -143,7 +144,7 @@ namespace rs2
         /**
         * get option value description (in case specific option value hold special meaning)
         * \param[in] option     option id to be checked
-        * \param[in] value      value of the option
+        * \param[in] val      value of the option
         * \return human-readable description of a specific value of an option or null if no special meaning
         */
         const char* get_option_value_description(rs2_option option, float val) const
@@ -211,6 +212,8 @@ namespace rs2
             _options = other._options;
             return *this;
         }
+        // if operator= is ok, this should be ok too
+        options(const options& other) : _options(other._options) {}
 
         virtual ~options() = default;
    protected:
@@ -223,7 +226,7 @@ namespace rs2
            return *this;
        }
 
-       options(const options& other) : _options(other._options) {}
+       
 
     private:
         rs2_options* _options;
@@ -411,6 +414,12 @@ namespace rs2
             return extension;
         }
 
+        explicit sensor(std::shared_ptr<rs2_sensor> dev)
+            :options((rs2_options*)dev.get()), _sensor(dev)
+        {
+        }
+        explicit operator std::shared_ptr<rs2_sensor>() { return _sensor; }
+
     protected:
         friend context;
         friend device_list;
@@ -420,10 +429,7 @@ namespace rs2
 
         std::shared_ptr<rs2_sensor> _sensor;
 
-        explicit sensor(std::shared_ptr<rs2_sensor> dev)
-            :options((rs2_options*)dev.get()),  _sensor(dev)
-        {
-        }
+
     };
 
     inline bool operator==(const sensor& lhs, const sensor& rhs)
@@ -445,7 +451,7 @@ namespace rs2
             rs2_error* e = nullptr;
             if(rs2_is_sensor_extendable_to(_sensor.get(), RS2_EXTENSION_ROI, &e) == 0 && !e)
             {
-                _sensor = nullptr;
+                _sensor.reset();
             }
             error::handle(e);
         }
@@ -478,7 +484,7 @@ namespace rs2
             rs2_error* e = nullptr;
             if (rs2_is_sensor_extendable_to(_sensor.get(), RS2_EXTENSION_DEPTH_SENSOR, &e) == 0 && !e)
             {
-                _sensor = nullptr;
+                _sensor.reset();
             }
             error::handle(e);
         }
@@ -495,6 +501,7 @@ namespace rs2
         }
 
         operator bool() const { return _sensor.get() != nullptr; }
+        explicit depth_sensor(std::shared_ptr<rs2_sensor> dev) : depth_sensor(sensor(dev)) {}
     };
 
     class depth_stereo_sensor : public depth_sensor
@@ -505,7 +512,7 @@ namespace rs2
             rs2_error* e = nullptr;
             if (_sensor && rs2_is_sensor_extendable_to(_sensor.get(), RS2_EXTENSION_DEPTH_STEREO_SENSOR, &e) == 0 && !e)
             {
-                _sensor = nullptr;
+                _sensor.reset();
             }
             error::handle(e);
         }

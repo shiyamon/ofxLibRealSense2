@@ -1,7 +1,7 @@
 /* License: Apache 2.0. See LICENSE file in root directory.
    Copyright(c) 2017 Intel Corporation. All Rights Reserved. */
 
-/** \file rs2_processing.h
+/** \file rs_processing.h
 * \brief
 * Exposes RealSense processing-block functionality for C compilers
 */
@@ -80,7 +80,7 @@ void rs2_start_processing_fptr(rs2_processing_block* block, rs2_frame_callback_p
 /**
 * This method is used to direct the output from the processing block to a dedicated queue object
 * \param[in] block          Processing block
-* \param[in] on_frame       Queue to place the processed frames to
+* \param[in] queue          Queue to place the processed frames to
 * \param[out] error  if non-null, receives any error that occurs during this call, otherwise, errors are ignored
 */
 void rs2_start_processing_queue(rs2_processing_block* block, rs2_frame_queue* queue, rs2_error** error);
@@ -110,13 +110,14 @@ rs2_frame_queue* rs2_create_frame_queue(int capacity, rs2_error** error);
 
 /**
 * deletes frame queue and releases all frames inside it
-* \param[in] frame queue to delete
+* \param[in] queue queue to delete
 */
 void rs2_delete_frame_queue(rs2_frame_queue* queue);
 
 /**
 * wait until new frame becomes available in the queue and dequeue it
 * \param[in] queue the frame queue data structure
+* \param[in] timeout_ms   max time in milliseconds to wait until an exception will be thrown
 * \param[out] error  if non-null, receives any error that occurs during this call, otherwise, errors are ignored
 * \return frame handle to be released using rs2_release_frame
 */
@@ -130,6 +131,16 @@ rs2_frame* rs2_wait_for_frame(rs2_frame_queue* queue, unsigned int timeout_ms, r
 * \return true if new frame was stored to output_frame
 */
 int rs2_poll_for_frame(rs2_frame_queue* queue, rs2_frame** output_frame, rs2_error** error);
+
+/**
+* wait until new frame becomes available in the queue and dequeue it
+* \param[in] queue          the frame queue data structure
+* \param[in] timeout_ms     max time in milliseconds to wait until a frame becomes available
+* \param[out] output_frame  frame handle to be released using rs2_release_frame
+* \param[out] error         if non-null, receives any error that occurs during this call, otherwise, errors are ignored
+* \return true if new frame was stored to output_frame
+*/
+int rs2_try_wait_for_frame(rs2_frame_queue* queue, unsigned int timeout_ms, rs2_frame** output_frame, rs2_error** error);
 
 /**
 * enqueue new frame into a queue

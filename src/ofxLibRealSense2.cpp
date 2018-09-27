@@ -13,7 +13,7 @@ using namespace::std;
 
 int ofxLibRealSense2::getDeviceCount()
 {
-    // query device
+    //// query device
     rs2::context ctx;
     return ctx.query_devices().size();
 }
@@ -127,7 +127,7 @@ void ofxLibRealSense2::updateFrameData()
             rs2::depth_frame depthFrame = frameset.get_depth_frame();
             _rawDepthBuff = (uint16_t*)depthFrame.get_data();
             
-            rs2::video_frame normalizedDepthFrame = _colorizer(depthFrame);
+            rs2::video_frame normalizedDepthFrame = _colorizer.process(depthFrame);
             _depthBuff = (uint8_t*)normalizedDepthFrame.get_data();
             
             _depthWidth = depthFrame.get_width();

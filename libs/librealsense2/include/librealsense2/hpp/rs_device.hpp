@@ -49,7 +49,7 @@ namespace rs2
         }
 
         template<class T>
-        T first()
+        T first() const
         {
             for (auto&& s : query_sensors())
             {
@@ -134,6 +134,9 @@ namespace rs2
         virtual ~device()
         {
         }
+
+        explicit operator std::shared_ptr<rs2_device>() { return _dev; };
+        explicit device(std::shared_ptr<rs2_device> dev) : _dev(dev) {}
     protected:
         friend class rs2::context;
         friend class rs2::device_list;
@@ -141,9 +144,7 @@ namespace rs2
         friend class rs2::device_hub;
 
         std::shared_ptr<rs2_device> _dev;
-        explicit device(std::shared_ptr<rs2_device> dev) : _dev(dev)
-        {
-        }
+        
     };
 
     class debug_protocol : public device
@@ -155,7 +156,7 @@ namespace rs2
             rs2_error* e = nullptr;
             if(rs2_is_device_extendable_to(_dev.get(), RS2_EXTENSION_DEBUG, &e) == 0 && !e)
             {
-                _dev = nullptr;
+                _dev.reset();
             }
             error::handle(e);
         }
@@ -283,6 +284,8 @@ namespace rs2
             return _list.get();
         }
 
+        operator std::shared_ptr<rs2_device_list>() { return _list; };
+
     private:
         std::shared_ptr<rs2_device_list> _list;
     };
@@ -296,7 +299,7 @@ namespace rs2
             rs2_error* e = nullptr;
             if (rs2_is_device_extendable_to(_dev.get(), RS2_EXTENSION_TM2, &e) == 0 && !e)
             {
-                _dev = nullptr;
+                _dev.reset();
             }
             error::handle(e);
         }
