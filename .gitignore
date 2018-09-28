@@ -48,6 +48,8 @@ xcuserdata
 *.ilk
 *.aps
 ipch/
+*.VC.db
+*.VC.VC.opendb
 
 # Eclipse
 .metadata
@@ -105,3 +107,7 @@ Desktop.ini
 .mailmap
 
 **/bin/*
+
+!libs/*/export/*.dll
+!libs/*/lib/*/*/*.lib
+!libs/*/lib/*/*/*/*.lib

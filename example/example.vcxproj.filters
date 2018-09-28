@@ -1,0 +1,198 @@
+<?xml version="1.0"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+		<ClCompile Include="src\ofApp.cpp">
+			<Filter>src</Filter>
+		</ClCompile>
+		<ClCompile Include="src\main.cpp">
+			<Filter>src</Filter>
+		</ClCompile>
+		<ClCompile Include="src\main.cpp">
+			<Filter>src</Filter>
+		</ClCompile>
+		<ClCompile Include="src\ofApp.cpp">
+			<Filter>src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxGui\src\ofxBaseGui.cpp">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxGui\src\ofxButton.cpp">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxGui\src\ofxGuiGroup.cpp">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxGui\src\ofxLabel.cpp">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxGui\src\ofxPanel.cpp">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxGui\src\ofxSlider.cpp">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxGui\src\ofxSliderGroup.cpp">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxGui\src\ofxToggle.cpp">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\..\..\addons\ofxLibRealSense2\src\ofxLibRealSense2.cpp">
+			<Filter>addons\ofxLibRealSense2\src</Filter>
+		</ClCompile>
+	</ItemGroup>
+	<ItemGroup>
+		<Filter Include="src">
+			<UniqueIdentifier>{d8376475-7454-4a24-b08a-aac121d3ad6f}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons">
+			<UniqueIdentifier>{71834F65-F3A9-211E-73B8-DC85}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxGui">
+			<UniqueIdentifier>{4F2A59AF-5F4E-704B-D067-EC13}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxGui\src">
+			<UniqueIdentifier>{645E9533-4DCD-6179-1CDF-CB65}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxLibRealSense2">
+			<UniqueIdentifier>{4B5F3F22-492A-CCA5-DFA1-6BF9}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxLibRealSense2\src">
+			<UniqueIdentifier>{FF9B900B-71DE-0679-9816-17F0}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxLibRealSense2\libs">
+			<UniqueIdentifier>{5CCFB92B-2072-C427-17F8-D0D5}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxLibRealSense2\libs\librealsense2">
+			<UniqueIdentifier>{85C0A24A-32CF-1F9A-E5DB-015F}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxLibRealSense2\libs\librealsense2\include">
+			<UniqueIdentifier>{8434E54E-294B-1F58-DA88-0D7A}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2">
+			<UniqueIdentifier>{D8E49E26-3298-3CF3-45E2-6EAD}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h">
+			<UniqueIdentifier>{669C660D-6EB3-02E0-9CB6-3B2C}</UniqueIdentifier>
+		</Filter>
+		<Filter Include="addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp">
+			<UniqueIdentifier>{9EC79CD9-F396-6210-DC49-03DB}</UniqueIdentifier>
+		</Filter>
+	</ItemGroup>
+	<ItemGroup>
+		<ClInclude Include="src\ofApp.h">
+			<Filter>src</Filter>
+		</ClInclude>
+		<ClInclude Include="src\ofApp.h">
+			<Filter>src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxBaseGui.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxButton.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxGui.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxGuiGroup.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxLabel.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxPanel.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxSlider.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxSliderGroup.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxGui\src\ofxToggle.h">
+			<Filter>addons\ofxGui\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\src\ofxLibRealSense2.hpp">
+			<Filter>addons\ofxLibRealSense2\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_advanced_mode_command.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_context.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_device.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_frame.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_internal.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_option.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_pipeline.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_processing.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_record_playback.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_sensor.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h\rs_types.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\h</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_context.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_device.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_frame.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_internal.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_pipeline.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_processing.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_record_playback.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_sensor.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp\rs_types.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\hpp</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\rs.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\rs.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\rsutil.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\rs_advanced_mode.h">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2</Filter>
+		</ClInclude>
+		<ClInclude Include="..\..\..\addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2\rs_advanced_mode.hpp">
+			<Filter>addons\ofxLibRealSense2\libs\librealsense2\include\librealsense2</Filter>
+		</ClInclude>
+	</ItemGroup>
+	<ItemGroup>
+		<ResourceCompile Include="icon.rc" />
+	</ItemGroup>
+</Project>

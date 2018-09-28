@@ -60,6 +60,8 @@ common:
 	# a specific platform
 	# ADDON_LIBS_EXCLUDE =
 	
+	ADDON_DLLS_TO_COPY = "libs/librealsense2/export/realsense2.dll"
+
 linux64:
 	# binary libraries, these will be usually parsed from the file system but some 
 	# libraries need to passed to the linker in a specific order/
