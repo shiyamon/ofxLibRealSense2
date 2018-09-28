@@ -23,26 +23,26 @@ void ofxLibRealSense2::setupDevice(int deviceID)
 {
     // query device
     rs2::context ctx;
-    _deviceList = ctx.query_devices();
-    cout << "RealSense device count: " << _deviceList.size() << endl;
+    rs2::device_list deviceList = ctx.query_devices();
     
-    if(_deviceList.size() <= 0) {
+    if(deviceList.size() <= 0) {
         ofSystemAlertDialog("RealSense device not found!");
         return;
     }
-    if (deviceID >= _deviceList.size()) {
+    if (deviceID >= deviceList.size()) {
         ofSystemAlertDialog("Requested device id is invalid");
         return;
     }
     
-    string deviceSerial = _deviceList[deviceID].get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+    _device = deviceList[deviceID];
+    string deviceSerial = _device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
     _config.enable_device(deviceSerial);
-    cout << "Device name is: " << _deviceList[deviceID].get_info(RS2_CAMERA_INFO_NAME) << endl;
+    cout << "Device name is: " << _device.get_info(RS2_CAMERA_INFO_NAME) << endl;
     
     _curDeviceID = deviceID;
     _setupFinished = true;
     
-    setupGUI();
+    setupGUI(deviceSerial);
 }
 
 
@@ -82,7 +82,6 @@ void ofxLibRealSense2::startPipeline(bool useThread)
 {
     if(!_setupFinished) return;
     
-//    _config.enable_device(_device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
     _pipeline.start(_config);
     _pipelineStarted=true;
     
@@ -167,15 +166,15 @@ void ofxLibRealSense2::update()
 }
 
 
-void ofxLibRealSense2::setupGUI()
+void ofxLibRealSense2::setupGUI(string serialNumber)
 {
-    rs2::sensor sensor = _deviceList[_curDeviceID].query_sensors()[0];
+    rs2::sensor sensor = _device.query_sensors()[0];
     rs2::option_range orExp = sensor.get_option_range(RS2_OPTION_EXPOSURE);
     rs2::option_range orGain = sensor.get_option_range(RS2_OPTION_GAIN);
     rs2::option_range orMinDist = _colorizer.get_option_range(RS2_OPTION_MIN_DISTANCE);
     rs2::option_range orMaxDist = _colorizer.get_option_range(RS2_OPTION_MAX_DISTANCE);
 
-    _D400Params.setup("D400");
+    _D400Params.setup("D400_" + serialNumber);
     _D400Params.add( _autoExposure.setup("Auto exposure", true) );
     _D400Params.add( _enableEmitter.setup("Emitter", true) );
     _D400Params.add( _irExposure.setup("IR Exposure", orExp.def, orExp.min, 26000 ));

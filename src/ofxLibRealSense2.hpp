@@ -13,6 +13,8 @@
 
 class ofxLibRealSense2 : public ofThread
 {
+public:
+    static int getDeviceCount();
     
 public:
     void setupDevice(int deviceID);
@@ -22,8 +24,6 @@ public:
     void startPipeline(bool useThread);
     void update();
     void exit();
-    
-    int getDeviceCount();
     
     ofTexture*  getColorTex()   { return &_colTex; }
     ofTexture*  getIrTex()      { return &_irTex; }
@@ -46,7 +46,7 @@ public:
     ofxLibRealSense2() : _setupFinished(false), _colorEnabled(false), _irEnabled(false), _depthEnabled(false), _pipelineStarted(false), _useThread(false) {}
     
 private:
-    rs2::device_list    _deviceList;
+    rs2::device     _device;
     int             _curDeviceID;
     
     rs2::config     _config;
@@ -73,7 +73,7 @@ private:
     
     void threadedFunction();
     void updateFrameData();
-    void setupGUI();
+    void setupGUI(std::string serialNumber);
     void onD400BoolParamChanged(bool &value);
     void onD400IntParamChanged(int &value);
     void onD400ColorizerParamChanged(float &value);
