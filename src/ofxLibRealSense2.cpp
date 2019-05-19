@@ -125,10 +125,15 @@ void ofxLibRealSense2::updateFrameData()
         if(_depthEnabled) {
             rs2::depth_frame depthFrame = frameset.get_depth_frame();
             _rawDepthBuff = (uint16_t*)depthFrame.get_data();
-            
+            if(_enableAngle) {
+            rs2::frameset frames = _pipeline.wait_for_frames();
+            rs2::align align(RS2_STREAM_COLOR);
+            auto aligned_frames = align.process(frames);
+            depthFrame = aligned_frames.get_depth_frame();
+            }
             rs2::video_frame normalizedDepthFrame = _colorizer.process(depthFrame);
             _depthBuff = (uint8_t*)normalizedDepthFrame.get_data();
-            
+
             _depthWidth = depthFrame.get_width();
             _depthHeight = depthFrame.get_height();
             _hasNewDepth = true;
@@ -177,6 +182,7 @@ void ofxLibRealSense2::setupGUI(string serialNumber)
     _D400Params.setup("D400_" + serialNumber);
     _D400Params.add( _autoExposure.setup("Auto exposure", true) );
     _D400Params.add( _enableEmitter.setup("Emitter", true) );
+    _D400Params.add( _enableAngle.setup("Angle correction", true) );
     _D400Params.add( _irExposure.setup("IR Exposure", orExp.def, orExp.min, 26000 ));
     _D400Params.add( _depthMin.setup("Min Depth", orMinDist.def, orMinDist.min, orMinDist.max));
     _D400Params.add( _depthMax.setup("Max Depth", orMaxDist.def, orMaxDist.min, orMaxDist.max));

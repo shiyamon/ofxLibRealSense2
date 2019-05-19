@@ -67,6 +67,7 @@ private:
     ofxGuiGroup     _D400Params;
     ofxToggle       _autoExposure;
     ofxToggle       _enableEmitter;
+    ofxToggle       _enableAngle;
     ofxIntSlider    _irExposure;
     ofxFloatSlider  _depthMin;
     ofxFloatSlider  _depthMax;
