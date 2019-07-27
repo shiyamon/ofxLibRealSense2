@@ -88,6 +88,16 @@ void ofxLibRealSense2::startPipeline(bool useThread)
     _useThread = useThread;
     if(_useThread)
         startThread();
+    
+//    vector<rs2::sensor> t = _pipeline.get_active_profile().get_device().query_sensors();
+//    for(int i=0; i<t.size(); ++i) {
+//        auto sensor = t[i];
+//        if(sensor.supports(RS2_OPTION_EXPOSURE)){
+//            cout << "sensor: " + ofToString(i) << endl;
+//            rs2::option_range orExp = sensor.get_option_range(RS2_OPTION_EXPOSURE);
+//            cout << "min: " << orExp.min << ", max: " << orExp.max << endl;
+//        }
+//    }
 }
 
 
@@ -173,23 +183,27 @@ void ofxLibRealSense2::update()
 
 void ofxLibRealSense2::setupGUI(string serialNumber)
 {
-    rs2::sensor sensor = _device.query_sensors()[0];
-    rs2::option_range orExp = sensor.get_option_range(RS2_OPTION_EXPOSURE);
-    rs2::option_range orGain = sensor.get_option_range(RS2_OPTION_GAIN);
+    vector<rs2::sensor> sensors = _device.query_sensors();
+    rs2::option_range orExp = sensors[0].get_option_range(RS2_OPTION_EXPOSURE);
+    rs2::option_range orColExp = sensors[1].get_option_range(RS2_OPTION_EXPOSURE);
     rs2::option_range orMinDist = _colorizer.get_option_range(RS2_OPTION_MIN_DISTANCE);
     rs2::option_range orMaxDist = _colorizer.get_option_range(RS2_OPTION_MAX_DISTANCE);
 
     _D400Params.setup("D400_" + serialNumber);
-    _D400Params.add( _autoExposure.setup("Auto exposure", true) );
+    _D400Params.add( _irAutoExposure.setup("Auto exposure", true) );
     _D400Params.add( _enableEmitter.setup("Emitter", true) );
-    _D400Params.add( _alignDepth.setup("Align depth to coloer", true) );
     _D400Params.add( _irExposure.setup("IR Exposure", orExp.def, orExp.min, 26000 ));
+    _D400Params.add( _colorAutoExposure.setup("Color Auto exposure", true) );
+    _D400Params.add( _colorExposure.setup("Color Exposure", orColExp.def, orColExp.min, 200 ));
+    _D400Params.add( _alignDepth.setup("Align depth to coloer", true) );
     _D400Params.add( _depthMin.setup("Min Depth", orMinDist.def, orMinDist.min, orMinDist.max));
     _D400Params.add( _depthMax.setup("Max Depth", orMaxDist.def, orMaxDist.min, orMaxDist.max));
     
-    _autoExposure.addListener(this, &ofxLibRealSense2::onD400BoolParamChanged);
+    _irAutoExposure.addListener(this, &ofxLibRealSense2::onD400BoolParamChanged);
+    _colorAutoExposure.addListener(this, &ofxLibRealSense2::onD400BoolParamChanged);
     _enableEmitter.addListener(this, &ofxLibRealSense2::onD400BoolParamChanged);
     _irExposure.addListener(this, &ofxLibRealSense2::onD400IntParamChanged);
+    _colorExposure.addListener(this, &ofxLibRealSense2::onD400IntParamChanged);
     _depthMin.addListener(this, &ofxLibRealSense2::onD400ColorizerParamChanged);
     _depthMax.addListener(this, &ofxLibRealSense2::onD400ColorizerParamChanged);
 }
@@ -198,20 +212,29 @@ void ofxLibRealSense2::setupGUI(string serialNumber)
 void ofxLibRealSense2::onD400BoolParamChanged(bool &value)
 {
     if(!_pipelineStarted) return;
-    rs2::sensor sensor = _pipeline.get_active_profile().get_device().first<rs2::depth_sensor>();
-    if(sensor.supports(RS2_OPTION_ENABLE_AUTO_EXPOSURE))
-        sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, _autoExposure?1.0f:0.0f);
-    if(sensor.supports(RS2_OPTION_EMITTER_ENABLED))
-        sensor.set_option(RS2_OPTION_EMITTER_ENABLED, _enableEmitter?1.0f:0.0f);
+    
+    vector<rs2::sensor> sensors = _pipeline.get_active_profile().get_device().query_sensors();
+    // ir sensor
+    if(sensors[0].supports(RS2_OPTION_ENABLE_AUTO_EXPOSURE))
+        sensors[0].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, _irAutoExposure?1.0f:0.0f);
+    if(sensors[0].supports(RS2_OPTION_EMITTER_ENABLED))
+        sensors[0].set_option(RS2_OPTION_EMITTER_ENABLED, _enableEmitter?1.0f:0.0f);
+
+    // color sensor
+    if(sensors[1].supports(RS2_OPTION_AUTO_EXPOSURE_MODE))
+        sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, _colorAutoExposure?1.0f:0.0f);
 }
 
 
 void ofxLibRealSense2::onD400IntParamChanged(int &value)
 {
     if(!_pipelineStarted) return;
-    rs2::sensor sensor = _pipeline.get_active_profile().get_device().first<rs2::depth_sensor>();
-    if(sensor.supports(RS2_OPTION_EXPOSURE))
-        sensor.set_option(RS2_OPTION_EXPOSURE, (float)_irExposure);
+    
+    vector<rs2::sensor> sensors = _pipeline.get_active_profile().get_device().query_sensors();
+    if(sensors[0].supports(RS2_OPTION_EXPOSURE))
+        sensors[0].set_option(RS2_OPTION_EXPOSURE, (float)_irExposure);
+    if(sensors[1].supports(RS2_OPTION_EXPOSURE))
+        sensors[1].set_option(RS2_OPTION_EXPOSURE, (float)_colorExposure);
 }
 
 

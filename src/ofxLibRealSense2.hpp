@@ -65,10 +65,14 @@ private:
     bool            _hasNewColor, _hasNewIr, _hasNewDepth, _hasNewFrame;
     
     ofxGuiGroup     _D400Params;
-    ofxToggle       _autoExposure;
+    ofxToggle       _irAutoExposure;
     ofxToggle       _enableEmitter;
     ofxToggle       _alignDepth;
+    ofxToggle       _colorAutoExposure;
+    
     ofxIntSlider    _irExposure;
+    ofxIntSlider    _colorExposure;
+    
     ofxFloatSlider  _depthMin;
     ofxFloatSlider  _depthMax;
     
