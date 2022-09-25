@@ -5,9 +5,9 @@ void ofApp::setup(){
     
     ofSetVerticalSync(false);
     _realsense2.setupDevice(0);
-    _realsense2.setupColor(640, 360, 30);
-    _realsense2.setupIR(640, 360, 30);
-    _realsense2.setupDepth(640, 360, 30);
+//    _realsense2.setupColor(640, 360, 30);
+    _realsense2.setupIR(640, 360, 60);
+//    _realsense2.setupDepth(640, 360, 30);
     _realsense2.startPipeline(true);
     
     _gui.setup("appSettings.xml");

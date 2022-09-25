@@ -11,7 +11,8 @@ void ofApp::setup(){
     for(int i=0; i<deviceCnt; ++i) {
         _rsList.push_back(new ofxLibRealSense2());
         _rsList.back()->setupDevice(i);
-        _rsList.back()->setupColor(640, 360, 30);
+//        _rsList.back()->setupColor(640, 360, 30);
+        _rsList.back()->setupIR(640, 360, 60);
         _rsList.back()->startPipeline(true);
         _gui.add(_rsList.back()->getGui());
     }
@@ -29,8 +30,10 @@ void ofApp::draw(){
     
     ofBackground(0);
     for (int i=0; i<_rsList.size(); ++i) {
-        if(_rsList[i]->colorEnabled())
-            _rsList[i]->getColorTex()->draw(640*i, 0);
+//        if(_rsList[i]->colorEnabled())
+//            _rsList[i]->getColorTex()->draw(640*i, 0);
+        if(_rsList[i]->irEnabled())
+            _rsList[i]->getIrTex()->draw(640*i, 0);
     }
     
     ofDrawBitmapString(ofToString(ofGetFrameRate()), 10, 10);

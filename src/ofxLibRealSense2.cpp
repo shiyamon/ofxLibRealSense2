@@ -36,13 +36,35 @@ void ofxLibRealSense2::setupDevice(int deviceID)
     
     _device = deviceList[deviceID];
     string deviceSerial = _device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+    
+    int errorCnt = 0;
+    bool success = false;
+    while(errorCnt < 10 && !success)
+    {
+        try{
+            success = setupDeviceInternal(deviceSerial);
+        }
+        catch(const rs2::error& e)
+        {
+            errorCnt++;
+            success = setupDeviceInternal(deviceSerial);
+            cout << "something is weird. will try again: " << errorCnt << endl;
+        }
+    }
+    
+    if(success) {
+        _curDeviceID = deviceID;
+        _setupFinished = true;
+    }
+}
+
+
+bool ofxLibRealSense2::setupDeviceInternal(std::string deviceSerial)
+{
     _config.enable_device(deviceSerial);
     cout << "Device name is: " << _device.get_info(RS2_CAMERA_INFO_NAME) << endl;
-    
-    _curDeviceID = deviceID;
-    _setupFinished = true;
-    
     setupGUI(deviceSerial);
+    return true;
 }
 
 
