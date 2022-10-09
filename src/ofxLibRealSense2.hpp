@@ -76,7 +76,7 @@ private:
     ofxFloatSlider  _depthMin;
     ofxFloatSlider  _depthMax;
     
-    bool setupDeviceInternal(std::string deviceSerial);
+    bool setupDeviceInternal(rs2::device_list deviceList, int deviceID);
     void threadedFunction();
     void updateFrameData();
     void setupGUI(std::string serialNumber);
