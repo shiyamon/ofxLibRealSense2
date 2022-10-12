@@ -36,7 +36,7 @@ void ofxLibRealSense2::setupDevice(int deviceID)
     
     int errorCnt = 0;
     bool success = false;
-    while(errorCnt < 100 && !success)
+    while(errorCnt < 10 && !success)
     {
         try{
             success = setupDeviceInternal(deviceList, deviceID);
@@ -215,7 +215,7 @@ void ofxLibRealSense2::setupGUI(string serialNumber)
     _D400Params.add( _enableEmitter.setup("Emitter", true) );
     _D400Params.add( _irExposure.setup("IR Exposure", orExp.def, orExp.min, 26000 ));
     _D400Params.add( _colorAutoExposure.setup("Color Auto exposure", true) );
-    _D400Params.add( _colorExposure.setup("Color Exposure", orColExp.def, orColExp.min, 200 ));
+    _D400Params.add( _colorExposure.setup("Color Exposure", orColExp.def, orColExp.min, orColExp.max ));
     _D400Params.add( _alignDepth.setup("Align depth to coloer", true) );
     _D400Params.add( _depthMin.setup("Min Depth", orMinDist.def, orMinDist.min, orMinDist.max));
     _D400Params.add( _depthMax.setup("Max Depth", orMaxDist.def, orMaxDist.min, orMaxDist.max));
