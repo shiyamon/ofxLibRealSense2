@@ -106,6 +106,8 @@ void ofxLibRealSense2::startPipeline(bool useThread)
     _pipeline.start(_config);
     _pipelineStarted=true;
     
+    _hasNewColor = _hasNewIr = _hasNewDepth = _hasNewFrame = false;
+    
     _useThread = useThread;
     if(_useThread)
         startThread();
