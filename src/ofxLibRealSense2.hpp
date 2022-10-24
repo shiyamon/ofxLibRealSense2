@@ -42,12 +42,14 @@ public:
     bool depthEnabled() { return _depthEnabled; }
     
     ofxGuiGroup *getGui();
+    std::string getDeviceSerial() { return _deviceSerial; }
     
     ofxLibRealSense2() : _setupFinished(false), _colorEnabled(false), _irEnabled(false), _depthEnabled(false), _pipelineStarted(false), _useThread(false) {}
     
 private:
     rs2::device     _device;
     int             _curDeviceID;
+    std::string _deviceSerial = "none";
     
     rs2::config     _config;
     rs2::pipeline   _pipeline;

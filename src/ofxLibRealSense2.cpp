@@ -62,6 +62,7 @@ bool ofxLibRealSense2::setupDeviceInternal(rs2::device_list deviceList, int devi
     cout << "Device serial is: " << deviceSerial << endl;
     _config.enable_device(deviceSerial);
     cout << "Device name is: " << _device.get_info(RS2_CAMERA_INFO_NAME) << endl;
+    _deviceSerial = deviceSerial;
     setupGUI(deviceSerial);
     return true;
 }
