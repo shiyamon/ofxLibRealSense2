@@ -50,6 +50,7 @@ xcuserdata
 ipch/
 *.VC.db
 *.VC.VC.opendb
+*.vs
 
 # Eclipse
 .metadata
