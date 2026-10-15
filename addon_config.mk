@@ -1,80 +1,32 @@
-# All variables and this file are optional, if they are not present the PG and the
-# makefiles will try to parse the correct values from the file system.
+# librealsense is built from source with scripts/build_librealsense_<platform> (see
+# scripts/README.md) and installed into libs/librealsense2:
 #
-# Variables that specify exclusions can use % as a wildcard to specify that anything in
-# that position will match. A partial path can also be specified to, for example, exclude
-# a whole folder from the parsed paths from the file system
+#   libs/librealsense2/include/librealsense2/      headers (the same on every platform)
+#   libs/librealsense2/lib/osx/librealsense2.a    static, universal (arm64 + x86_64)
+#   libs/librealsense2/lib/vs/x64/                realsense2.lib + realsense2.dll
+#   libs/librealsense2/lib/linux64/               librealsense2.a (linuxaarch64 on ARM)
 #
-# Variables can be specified using = or +=
-# = will clear the contents of that variable both specified from the file or the ones parsed
-# from the file system
-# += will add the values to the previous ones in the file or the ones parsed from the file 
-# system
-# 
-# The PG can be used to detect errors in this file, just create a new project with this addon 
-# and the PG will write to the console the kind of error and in which line it is
+# librealsense's C++ API (rs.hpp) is header-only on top of its C API, so one Release build
+# serves Debug and Release apps, and the static libraries export nothing but rs2_*.
 
 meta:
 	ADDON_NAME = ofxLibRealSense2
-	ADDON_DESCRIPTION = 
-	ADDON_AUTHOR = YOSHIDA Shinya
-	ADDON_TAGS = "Hardware Interface"
-	ADDON_URL = http://github.com/shiyamon/ofxLibRealSense2
+	ADDON_DESCRIPTION = Intel RealSense depth cameras (D400 / D500) through librealsense 2 - multiple cameras, threaded capture and point clouds / meshes, recording and playback. API shared with ofxKinectV2.
+	ADDON_AUTHOR = YOSHIDA Shinya (original addon), Fred Rodrigues
+	ADDON_TAGS = "realsense" "depth camera" "librealsense" "point cloud" "device"
+	ADDON_URL = https://github.com/fred-dev/ofxLibRealSense2
 
 common:
-	# dependencies with other addons, a list of them separated by spaces 
-	# or use += in several lines
-	# ADDON_DEPENDENCIES = 
-	
-	# include search paths, this will be usually parsed from the file system
-	# but if the addon or addon libraries need special search paths they can be
-	# specified here separated by spaces or one per line using +=
-	# ADDON_INCLUDES =
-	
-	# any special flag that should be passed to the compiler when using this
-	# addon
-	# ADDON_CFLAGS =
-	
-	# any special flag that should be passed to the linker when using this
-	# addon, also used for system libraries with -lname
-	# ADDON_LDFLAGS =
-	
-	# linux only, any library that should be included in the project using
-	# pkg-config
-	# ADDON_PKG_CONFIG_LIBRARIES =
-	
-	# osx/iOS only, any framework that should be included in the project
-	# ADDON_FRAMEWORKS =
-	
-	# source files, these will be usually parsed from the file system looking
-	# in the src folders in libs and the root of the addon. if your addon needs
-	# to include files in different places or a different set of files per platform
-	# they can be specified here
-	# ADDON_SOURCES =
-	
-	# some addons need resources to be copied to the bin/data folder of the project
-	# specify here any files that need to be copied, you can use wildcards like * and ?
-	# ADDON_DATA = 
-	
-	# when parsing the file system looking for libraries exclude this for all or
-	# a specific platform
-	# ADDON_LIBS_EXCLUDE =
-	
-	ADDON_DLLS_TO_COPY = "libs/librealsense2/export/realsense2.dll"
+
+osx:
+	# libusb inside librealsense2.a needs these.
+	ADDON_FRAMEWORKS = IOKit CoreFoundation Security
+
+vs:
+	# realsense2.dll in lib/vs/x64 is copied next to the exe by the project generator.
 
 linux64:
-	# binary libraries, these will be usually parsed from the file system but some 
-	# libraries need to passed to the linker in a specific order/
-	# 
-	# For example in the ofxOpenCV addon we do something like this:
-	#
-	# ADDON_LIBS =
-	# ADDON_LIBS += libs/opencv/lib/linuxarmv6l/libopencv_legacy.a
-	# ADDON_LIBS += libs/opencv/lib/linuxarmv6l/libopencv_calib3d.a
-	# ...
-linux:
-win_cb:
-linuxarmv6l:
-linuxarmv7l:
-android/armeabi:	
-android/armeabi-v7a:	
+	ADDON_LDFLAGS = -ludev -lpthread
+
+linuxaarch64:
+	ADDON_LDFLAGS = -ludev -lpthread

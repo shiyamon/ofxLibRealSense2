@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2017 Intel Corporation. All Rights Reserved.
+// Copyright(c) 2017 RealSense, Inc. All Rights Reserved.
 
 #ifndef LIBREALSENSE_RS2_FRAME_HPP
 #define LIBREALSENSE_RS2_FRAME_HPP
@@ -17,6 +17,7 @@ namespace rs2
     class frame;
     class pipeline_profile;
     class points;
+    class video_stream_profile;
 
     class stream_profile
     {
@@ -32,7 +33,7 @@ namespace rs2
         */
         int stream_index() const { return _index; }
         /**
-        * Return the stream format
+        * Return the stream type
         * \return rs2_stream - stream type
         */
         rs2_stream stream_type() const { return _type; }
@@ -53,7 +54,7 @@ namespace rs2
         int unique_id() const { return _uid; }
 
         /**
-        * Clone current profile and change the type, index and format to input parameters
+        * Clone the current profile and change the type, index and format to input parameters
         * \param[in] type - will change the stream type from the cloned profile.
         * \param[in] index - will change the stream index from the cloned profile.
         * \param[in] format - will change the stream format from the cloned profile.
@@ -111,20 +112,29 @@ namespace rs2
         */
         std::string stream_name() const
         {
-            std::stringstream ss;
-            ss << rs2_stream_to_string(stream_type());
-            if (stream_index() != 0) ss << " " << stream_index();
-            return ss.str();
+            rs2_error * e = nullptr;
+            std::string name = rs2_get_stream_profile_name( _profile, &e );
+
+            if( name.empty() )
+            {
+                std::stringstream ss;
+                ss << rs2_stream_to_string( stream_type() );
+                if( stream_index() != 0 )
+                    ss << " " << stream_index();
+                name = ss.str();
+            }
+
+            return name;
         }
 
         /**
-        * Checking if stream profile is marked/assigned as default, the meaning is that the profile will be selected when the user will request stream configuration using wildcards (RS2_DEPTH, -1,-1,...
+        * Checks if stream profile is marked/assigned as default, meaning that the profile will be selected when the user requests stream configuration using wildcards (RS2_DEPTH, -1,-1,...
         * \return bool - true or false.
         */
         bool is_default() const { return _default; }
 
         /**
-        * Parenthesis operator check that the profile is valid
+        * Checks if the profile is valid
         * \return bool - true or false.
         */
         operator bool() const { return _profile != nullptr; }
@@ -153,8 +163,8 @@ namespace rs2
             return res;
         }
         /**
-        * Assign extrinsic transformation parameters to a specific profile (sensor). The extrinsic information is generally available as part of the camera calibration, and librealsense is responsible to retrieve and assign these parameters where appropriate.
-        * The specific function is intended for synthetic/mock-up (software) devices for which the parameters are produced and injected by the user.
+        * Assign extrinsic transformation parameters to a specific profile (sensor). The extrinsic information is generally available as part of the camera calibration, and librealsense is responsible for retrieving and assigning these parameters where appropriate.
+        * This specific function is intended for synthetic/mock-up (software) devices for which the parameters are produced and injected by the user.
         * \param[in] stream_profile to - which stream profile to be registered with the extrinsic.
         * \param[in] rs2_extrinsics extrinsics - the extrinsics to be registered.
         */
@@ -183,7 +193,7 @@ namespace rs2
         friend class rs2::sensor;
         friend class rs2::frame;
         friend class rs2::pipeline_profile;
-        friend class software_sensor;
+        friend class rs2::video_stream_profile;
 
         const rs2_stream_profile* _profile;
         std::shared_ptr<rs2_stream_profile> _clone;
@@ -200,15 +210,17 @@ namespace rs2
     class video_stream_profile : public stream_profile
     {
     public:
+        video_stream_profile() : stream_profile() {}
+
         /**
-        * Video stream profile instance which contans additional video attributes
+        * Stream profile instance which contains additional video attributes
         * \param[in] stream_profile sp - assign exisiting stream_profile to this instance.
         */
         explicit video_stream_profile(const stream_profile& sp)
             : stream_profile(sp)
         {
             rs2_error* e = nullptr;
-            if ((rs2_stream_profile_is(sp.get(), RS2_EXTENSION_VIDEO_PROFILE, &e) == 0 && !e))
+            if (!sp || (rs2_stream_profile_is(sp.get(), RS2_EXTENSION_VIDEO_PROFILE, &e) == 0 && !e))
             {
                 _profile = nullptr;
             }
@@ -231,7 +243,7 @@ namespace rs2
             return _height;
         }
         /**
-        * Get stream profile instrinsics attribute
+        * Get stream profile instrinsics attributes
         * \return rs2_intrinsics - stream intrinsics.
         */
         rs2_intrinsics get_intrinsics() const
@@ -243,6 +255,35 @@ namespace rs2
             return intr;
         }
 
+        bool operator==(const video_stream_profile& other) const
+        {
+            return (((stream_profile&)*this)==other && 
+                    width() == other.width() &&
+                    height() == other.height());
+        }
+
+        using stream_profile::clone;
+
+        /**
+        * Clone current profile and change the type, index and format to input parameters
+        * \param[in] type - will change the stream type from the cloned profile.
+        * \param[in] index - will change the stream index from the cloned profile.
+        * \param[in] format - will change the stream format from the cloned profile.
+        * \param[in] width - will change the width of the profile
+        * \param[in] height - will change the height of the profile
+        * \param[in] intr - will change the intrinsics of the profile
+        * \return stream_profile - return the cloned stream profile.
+        */
+        stream_profile clone(rs2_stream type, int index, rs2_format format, int width, int height, const rs2_intrinsics& intr) const
+        {
+            rs2_error* e = nullptr;
+            auto ref = rs2_clone_video_stream_profile(_profile, type, index, format, width, height, &intr, &e);
+            error::handle(e);
+            stream_profile res(ref);
+            res._clone = std::shared_ptr<rs2_stream_profile>(ref, [](rs2_stream_profile* r) { rs2_delete_stream_profile(r); });
+
+            return res;
+        }
     private:
         int _width = 0;
         int _height = 0;
@@ -253,14 +294,14 @@ namespace rs2
     {
     public:
         /**
-        * Video stream profile instance which contans additional motion attributes
+        * Stream profile instance which contains IMU-specific intrinsics.
         * \param[in] stream_profile sp - assign exisiting stream_profile to this instance.
         */
         explicit motion_stream_profile(const stream_profile& sp)
             : stream_profile(sp)
         {
             rs2_error* e = nullptr;
-            if ((rs2_stream_profile_is(sp.get(), RS2_EXTENSION_MOTION_PROFILE, &e) == 0 && !e))
+            if (!sp || (rs2_stream_profile_is(sp.get(), RS2_EXTENSION_MOTION_PROFILE, &e) == 0 && !e))
             {
                 _profile = nullptr;
             }
@@ -268,11 +309,10 @@ namespace rs2
         }
 
         /**
-        * Returns scale and bias of a the motion stream profile
+        * Returns scale/bias/covariances of a the motion sensors
         * \return rs2_motion_device_intrtinsic - stream motion intrinsics
         */
         rs2_motion_device_intrinsic get_motion_intrinsics() const
-
         {
             rs2_error* e = nullptr;
             rs2_motion_device_intrinsic intrin;
@@ -282,15 +322,48 @@ namespace rs2
         }
     };
 
+    class pose_stream_profile : public stream_profile
+    {
+    public:
+        /**
+        * Stream profile instance with an explicit pose extension type.
+        * \param[in] stream_profile sp - assign exisiting stream_profile to this instance.
+        */
+        explicit pose_stream_profile(const stream_profile& sp)
+            : stream_profile(sp)
+        {
+            rs2_error* e = nullptr;
+            if (!sp || (rs2_stream_profile_is(sp.get(), RS2_EXTENSION_POSE_PROFILE, &e) == 0 && !e))
+            {
+                _profile = nullptr;
+            }
+            error::handle(e);
+        }
+    };
+
+    class perception_stream_profile : public stream_profile
+    {
+    public:
+        explicit perception_stream_profile(const stream_profile& sp)
+            : stream_profile(sp)
+        {
+            rs2_error* e = nullptr;
+            if (!sp || (rs2_stream_profile_is(sp.get(), RS2_EXTENSION_PERCEPTION_PROFILE, &e) == 0 && !e))
+            {
+                _profile = nullptr;
+            }
+            error::handle(e);
+        }
+    };
+
     /**
-    Interface for frame processing functionality
+    Interface for frame filtering functionality
     */
-    class process_interface
+    class filter_interface
     {
     public:
         virtual rs2::frame process(rs2::frame frame) const = 0;
-        virtual rs2_processing_block* get() const = 0;
-        virtual ~process_interface() = default;
+        virtual ~filter_interface() = default;
     };
 
     class frame
@@ -304,16 +377,16 @@ namespace rs2
         * Base class for multiple frame extensions with internal frame handle
         * \param[in] rs2_frame frame_ref - internal frame instance
         */
-        frame(rs2_frame* frame_ref) : frame_ref(frame_ref)
+        frame(rs2_frame* ref) : frame_ref(ref)
         {
 #ifdef _DEBUG
-            if (frame_ref)
+            if (ref)
             {
                 rs2_error* e = nullptr;
-                auto r = rs2_get_frame_number(frame_ref, &e);
+                auto r = rs2_get_frame_number(ref, &e);
                 if (!e)
                     frame_number = r;
-                auto s = rs2_get_frame_stream_profile(frame_ref, &e);
+                auto s = rs2_get_frame_stream_profile(ref, &e);
                 if (!e)
                     profile = stream_profile(s);
             }
@@ -390,14 +463,39 @@ namespace rs2
         void keep() { rs2_keep_frame(frame_ref); }
 
         /**
-        * Parenthesis operator check internal frame handle is valid.
+        * Parenthesis operator check if internal frame handle is valid.
         * \return bool - true or false.
         */
         operator bool() const { return frame_ref != nullptr; }
 
+        rs2_sensor* get_sensor()
+        {
+            rs2_error* e = nullptr;
+            auto r = rs2_get_frame_sensor(frame_ref, &e);
+            error::handle(e);
+            return r;
+        }
+
         /**
         * retrieve the time at which the frame was captured
-        * \return            the timestamp of the frame, in milliseconds since the device was started
+        * During the frame's lifetime it receives timestamps both at the device and host levels.
+        * The different timestamps are gathered and managed under the frame's Metadata attributes.
+        * Chronologically the list of timestamps comprises of:
+        * SENSOR_TIMESTAMP  - Device clock. For video sensors designates the middle of exposure. Requires metadata support.
+        * FRAME_TIMESTAMP   - Device clock. Stamped at the beginning of frame readout and transfer. Requires metadata support.
+        * BACKEND_TIMESTAMP - Host (EPOCH) clock in Kernel space. Frame transfer from USB Controller to the USB Driver.
+        * TIME_OF_ARRIVAL   - Host (EPOCH) clock in User space. Frame transfer from the USB Driver to Librealsense.
+        *
+        * During runtime the SDK dynamically selects the most correct representaion, based on both device and host capabilities:
+        * In case the frame metadata is not configured:
+        *   -   The function call provides the TIME_OF_ARRIVAL stamp.
+        * In case the metadata is available the function returns:
+        *   -   `HW Timestamp` (FRAME_TIMESTAMP), or
+        *   -   `Global Timestamp`  Host-corrected derivative of `HW Timestamp` required for multi-sensor/device synchronization
+        *   -   The user can select between the unmodified and the host-calculated Hardware Timestamp by toggling
+        *       the `RS2_OPTION_GLOBAL_TIME_ENABLED` option.
+        * To query which of the three alternatives is active use `get_frame_timestamp_domain()` function call
+        * \return            the timestamp of the frame, in milliseconds according to the elaborated flow
         */
         double get_timestamp() const
         {
@@ -455,6 +553,18 @@ namespace rs2
         }
 
         /**
+        * retrieve data size from frame handle
+        * \return               the number of bytes in frame
+        */
+        const int get_data_size() const
+        {
+            rs2_error* e = nullptr;
+            auto r = rs2_get_frame_data_size(frame_ref, &e);
+            error::handle(e);
+            return r;
+        }
+
+        /**
         * retrieve data from frame handle
         * \return               the pointer to the start of the frame data
         */
@@ -463,6 +573,25 @@ namespace rs2
             rs2_error* e = nullptr;
             auto r = rs2_get_frame_data(frame_ref, &e);
             error::handle(e);
+            return r;
+        }
+
+        /**
+        * Retrieve a GPU device pointer for the frame, uploading it if necessary. Always returns
+        * a usable device pointer on a CUDA build (zero-copy when the frame is GPU-mapped, else an
+        * SDK-managed host->device copy); returns nullptr on non-CUDA builds. If `copied` is
+        * non-null it is set to true when the SDK had to upload, false when it was zero-copy.
+        * Valid only while this frame is held.
+        * \param[out] copied  set to true if the SDK uploaded (a copy), false if zero-copy
+        * \return             GPU device pointer for the frame, or nullptr on non-CUDA builds
+        */
+        const void* get_gpu_data_or_upload( bool* copied = nullptr ) const
+        {
+            rs2_error* e = nullptr;
+            int c = 0;
+            auto r = rs2_get_frame_gpu_data_or_upload(frame_ref, &c, &e);
+            error::handle(e);
+            if( copied ) *copied = ( c != 0 );
             return r;
         }
 
@@ -506,9 +635,9 @@ namespace rs2
         rs2_frame* get() const { return frame_ref; }
         explicit operator rs2_frame*() { return frame_ref; }
 
-        frame apply_filter(process_interface& processing_block)
+        frame apply_filter(filter_interface& filter)
         {
-            return processing_block.process(*this);
+            return filter.process(*this);
         }
 
     protected:
@@ -553,7 +682,7 @@ namespace rs2
     {
     public:
         /**
-        * Inherit frame class with additional video related attributs/functions
+        * Extends the frame class with additional video related attributes and functions
         * \param[in] frame - existing frame instance
         */
         video_frame(const frame& f)
@@ -621,6 +750,24 @@ namespace rs2
         * \return            number of bytes per one pixel
         */
         int get_bytes_per_pixel() const { return get_bits_per_pixel() / 8; }
+
+        /**
+        * Extract the dimensions on the specific target
+        * \param[in] frame            Left or right camera frame of specified size based on the target type
+        * \param[in] calib_type       Calibration target type
+        * \param[in] target_dims_size Target dimension array size. 4 for RS2_CALIB_TARGET_RECT_GAUSSIAN_DOT_VERTICES and 8 for RS2_CALIB_TARGET_POS_GAUSSIAN_DOT_VERTICES
+        * \param[out] target_dims     The array to hold the result target dimensions calculated.
+                                      For type RS2_CALIB_TARGET_RECT_GAUSSIAN_DOT_VERTICES and RS2_CALIB_TARGET_ROI_RECT_GAUSSIAN_DOT_VERTICES, the four rectangle side sizes in pixels with the order of top, bottom, left, and right
+                                      For type RS2_CALIB_TARGET_POS_GAUSSIAN_DOT_VERTICES, the four vertices coordinates in pixels with the order of top, bottom, left, and right
+        * \param[out] error           If non-null, receives any error that occurs during this call, otherwise, errors are ignored
+        */
+        bool extract_target_dimensions(rs2_calib_target_type calib_type, float* target_dims, unsigned int target_dims_size) const
+        {
+            rs2_error* e = nullptr;
+            rs2_extract_target_dimensions(get(), calib_type, target_dims, target_dims_size, &e);
+            error::handle(e);
+            return (e == nullptr);
+        }
     };
 
     struct vertex {
@@ -631,17 +778,17 @@ namespace rs2
         float u, v;
         operator const float*() const { return &u; }
     };
-
+ 
     class points : public frame
     {
     public:
         /**
-        * Inherit frame class with additional point cloud related attributs/functions
+        * Extends the frame class with additional point cloud related attributes and functions
         */
         points() : frame(), _size(0) {}
 
         /**
-        * Inherit frame class with additional point cloud related attributs/functions
+        * Extends the frame class with additional point cloud related attributes and functions
         * \param[in] frame - existing frame instance
         */
         points(const frame& f)
@@ -656,13 +803,12 @@ namespace rs2
 
             if (get())
             {
-                rs2_error* e = nullptr;
                 _size = rs2_get_frame_points_count(get(), &e);
                 error::handle(e);
             }
         }
         /**
-        * Retrieve back the vertices
+        * Retrieve the vertices of the point cloud
         * \param[in] vertex* - pointer of vertex sturcture
         */
         const vertex* get_vertices() const
@@ -674,7 +820,7 @@ namespace rs2
         }
 
         /**
-        * Export current point cloud to PLY file
+        * Export the point cloud to a PLY file
         * \param[in] string fname - file name of the PLY to be saved
         * \param[in] video_frame texture - the texture for the PLY.
         */
@@ -687,7 +833,7 @@ namespace rs2
             error::handle(e);
         }
         /**
-        * return the texture coordinate(uv map) for the point cloud
+        * Retrieve the texture coordinates (uv map) for the point cloud
         * \return texture_coordinate* - pointer of texture coordinates.
         */
         const texture_coordinate* get_texture_coordinates() const
@@ -707,11 +853,111 @@ namespace rs2
         size_t _size;
     };
 
+
+    class labeled_points : public frame
+    {
+    public:
+        /**
+        * Extends the frame class with additional point cloud related attributes and functions
+        */
+        labeled_points() : frame(), _size(0) {}
+
+        /**
+        * Extends the frame class with additional point cloud related attributes and functions
+        * \param[in] frame - existing frame instance
+        */
+        labeled_points(const frame& f)
+            : frame(f), _size(0)
+        {
+            rs2_error* e = nullptr;
+            if (!f || (rs2_is_frame_extendable_to(f.get(), RS2_EXTENSION_LABELED_POINTS, &e) == 0 && !e))
+            {
+                reset();
+            }
+            error::handle(e);
+
+            if (get())
+            {
+                _size = rs2_get_frame_labeled_points_count(get(), &e);
+                error::handle(e);
+            }
+        }
+
+        /**
+        * Retrieve the vertices of the point cloud
+        * \param[in] vertex* - pointer of vertex structure
+        */
+        const vertex* get_vertices() const
+        {
+            rs2_error* e = nullptr;
+            auto res = rs2_get_frame_labeled_vertices(get(), &e);
+            error::handle(e);
+            return (const vertex*)res;
+        }
+
+        /**
+        * Retrieve the attributes of the point cloud stream
+        * \param[out] attributes* - pointer of attributes structure
+        */
+        const uint8_t* get_labels() const
+        {
+            rs2_error* e = nullptr;
+            auto res = rs2_get_frame_labels(get(), &e);
+            error::handle(e);
+            return (uint8_t * )res;
+        }
+
+        // Returns the vertices counts
+        size_t size() const
+        {
+            return _size;
+        }
+
+        /**
+        * returns labeled point cloud width in pixels
+        * \return        frame width in pixels
+        */
+        unsigned int get_width() const
+        {
+            rs2_error* e = nullptr;
+            auto r = rs2_get_frame_labeled_points_width(get(), &e);
+            error::handle(e);
+            return r;
+        }
+
+        /**
+        * returns labeled point cloud height in pixels
+        * \return        frame height in pixels
+        */
+        unsigned int get_height() const
+        {
+            rs2_error* e = nullptr;
+            auto r = rs2_get_frame_labeled_points_height(get(), &e);
+            error::handle(e);
+            return r;
+        }
+
+        /**
+        * retrieve bits per pixel
+        * \return            number of bits per one pixel
+        */
+        unsigned int get_bits_per_pixel() const
+        {
+            rs2_error* e = nullptr;
+            auto r = rs2_get_frame_labeled_points_bits_per_pixel(get(), &e);
+            error::handle(e);
+            return r;
+        }
+
+    private:
+        size_t _size;
+    };
+
     class depth_frame : public video_frame
     {
     public:
         /**
-        * Inherit video_frame class with additional depth related attributs/functions
+        * Extends the video_frame class with additional depth related attributes and functions
         * \param[in] frame - existing frame instance
         */
         depth_frame(const frame& f)
@@ -726,10 +972,10 @@ namespace rs2
         }
 
         /**
-        * Return the distance between two depth pixels
-        * \param[in] int x - first pixel position.
-        * \param[in] int y - second pixel position.
-        * \return float - distance between to points.
+        * Provide the depth in meters at the given pixel
+        * \param[in] int x - pixel's x coordinate.
+        * \param[in] int y - pixel's y coordinate.
+        * \return float - depth in metric units at given pixel
         */
         float get_distance(int x, int y) const
         {
@@ -738,13 +984,25 @@ namespace rs2
             error::handle(e);
             return r;
         }
+
+        /**
+        * Provide the scaling factor to use when converting from get_data() units to meters
+        * \return float - depth, in meters, per 1 unit stored in the frame data
+        */
+        float get_units() const
+        {
+            rs2_error * e = nullptr;
+            auto r = rs2_depth_frame_get_units( get(), &e );
+            error::handle( e );
+            return r;
+        }
     };
 
     class disparity_frame : public depth_frame
     {
     public:
         /**
-        * Inherit depth_frame class with additional disparity related attributs/functions
+        * Extend depth_frame class with additional disparity related attributes/functions
         * \param[in] frame - existing frame instance
         */
         disparity_frame(const frame& f)
@@ -758,7 +1016,7 @@ namespace rs2
             error::handle(e);
         }
         /**
-        * Retrieve back the distance between two IR sensors.
+        * Retrieve the distance between the two IR sensors.
         * \return float - baseline.
         */
         float get_baseline(void) const
@@ -770,11 +1028,55 @@ namespace rs2
         }
     };
 
+    /**
+    * GPU-Frame extension: present when the frame's pixels reside in GPU-accessible (zero-copy)
+    * memory. Reach it with frame::as<gpu_frame>() — the cast is null unless the SDK was built with
+    * BUILD_WITH_CUDA_ZEROCOPY and the frame is GPU-resident (integrated GPU / Jetson). This mirrors
+    * rs2::gl::gpu_frame: get_data() on the base frame keeps returning the HOST pointer (the viewer,
+    * recording, pyrealsense2/OpenCV and any CPU code still use it); the GPU device pointer is a
+    * SEPARATE accessor on this extension. Typical use:
+    *
+    *     auto color = frames.get_color_frame();
+    *     const void * host = color.get_data();              // host pointer, always valid
+    *     if( auto gf = color.as<rs2::gpu_frame>() )          // true only when GPU-resident
+    *         feed_cuda( gf.get_gpu_data() );                 // device pointer, no host->device copy
+    *     else
+    *         feed_cuda( color.get_gpu_data_or_upload() );    // not zero-copy: upload (a copy)
+    */
+    class gpu_frame : public frame
+    {
+    public:
+        gpu_frame(const frame& f)
+            : frame(f)
+        {
+            rs2_error* e = nullptr;
+            if (!f || (rs2_is_frame_extendable_to(f.get(), RS2_EXTENSION_GPU_FRAME, &e) == 0 && !e))
+            {
+                reset();
+            }
+            error::handle(e);
+        }
+
+        /**
+        * Retrieve the CUDA device pointer aliasing the frame data for zero-copy GPU consumption
+        * (e.g. binding the frame directly as a CUDA / TensorRT / NPP input with no host->device
+        * copy). The frame must stay alive (hold it) until the GPU work completes.
+        * \return  GPU device pointer aliasing the frame data
+        */
+        const void* get_gpu_data() const
+        {
+            rs2_error* e = nullptr;
+            auto r = rs2_get_frame_gpu_data(get(), &e);
+            error::handle(e);
+            return r;
+        }
+    };
+
     class motion_frame : public frame
     {
     public:
         /**
-        * Inherit frame class with additional motion related attributs/functions
+        * Extends the frame class with additional motion related attributes and functions
         * \param[in] frame - existing frame instance
         */
         motion_frame(const frame& f)
@@ -788,13 +1090,23 @@ namespace rs2
             error::handle(e);
         }
         /**
-        * Retrieve back the motion data from IMU sensor
-        * \return rs2_vector - 3D vector in Euclidean coordinate space.
-        */
-        rs2_vector get_motion_data()
+         * Retrieve the motion data for frames with RS2_FORMAT_MOTION_XYZ32F, RS2_STREAM_GYRO or RS2_STREAM_ACCEL.
+         * For RS2_STREAM_MOTION and RS2_FORMAT_COMBINED_MOTION, use get_combined_motion_data().
+         * \return rs2_vector - 3D vector in Euclidean coordinate space.
+         */
+        rs2_vector get_motion_data() const
         {
             auto data = reinterpret_cast<const float*>(get_data());
             return rs2_vector{ data[0], data[1], data[2] };
+        }
+        /**
+         * Retrieve the combined motion data for frames with RS2_FORMAT_COMBINED_MOTION and RS2_STREAM_MOTION.
+         * For RS2_FORMAT_MOTION_XYZ32F and RS2_STREAM_GYRO or RS2_STREAM_ACCEL, use get_motion_data().
+         * \return rs2_combined_motion - including linear acceleration and angular velocity.
+         */
+        rs2_combined_motion get_combined_motion_data() const
+        {
+            return *reinterpret_cast< rs2_combined_motion const * >( get_data() );
         }
     };
 
@@ -802,7 +1114,7 @@ namespace rs2
     {
     public:
         /**
-        * Inherit frame class with additional pose related attributs/functions
+        * Extends the frame class with additional pose related attributes and functions
         * \param[in] frame - existing frame instance
         */
         pose_frame(const frame& f)
@@ -816,10 +1128,10 @@ namespace rs2
             error::handle(e);
         }
         /**
-        * Retrieve back the pose data from IMU sensor
+        * Retrieve the pose data from T2xx position tracking sensor
         * \return rs2_pose - orientation and velocity data.
         */
-        rs2_pose get_pose_data()
+        rs2_pose get_pose_data() const
         {
             rs2_pose pose_data;
             rs2_error* e = nullptr;
@@ -829,15 +1141,91 @@ namespace rs2
         }
     };
 
+    class perception_frame : public frame
+    {
+    public:
+        /**
+         * Extends the frame class with attributes inferred from the frame content, such as object detection results.
+         */
+        perception_frame() : frame()
+        {
+        }
+
+        /**
+         * Extends the frame class with attributes inferred from the frame content, such as object detection results.
+         * \param[in] frame - existing frame instance
+         */
+        perception_frame( const frame & f ) : frame( f )
+        {
+            rs2_error * e = nullptr;
+            if( ! f || ( rs2_is_frame_extendable_to( f.get(), RS2_EXTENSION_PERCEPTION_FRAME, &e ) == 0 && ! e ) )
+            {
+                reset();
+            }
+            error::handle( e );
+        }
+    };
+
+    class object_detection_frame : public perception_frame
+    {
+    public:
+        /**
+        * Extends perception_frame class with additional object detection related attributes and functions
+        */
+        object_detection_frame() : perception_frame() {}
+
+        /**
+        * Extends perception_frame class with additional object detection related attributes and functions
+        * \param[in] frame - existing frame instance
+        */
+        object_detection_frame(const frame& f)
+            : perception_frame(f)
+        {
+            rs2_error* e = nullptr;
+            if (!f || (rs2_is_frame_extendable_to(f.get(), RS2_EXTENSION_OBJECT_DETECTION_FRAME, &e) == 0 && !e))
+            {
+                reset();
+            }
+            error::handle(e);
+        }
+
+        /**
+        * Get the number of detected objects in this frame
+        * \return unsigned int - number of detections
+        */
+        unsigned int get_detection_count() const
+        {
+            rs2_error* e = nullptr;
+            auto r = rs2_get_frame_object_detection_count(get(), &e);
+            error::handle(e);
+            return r;
+        }
+
+        /**
+        * Get a specific detection by index. The result includes center-of-mass camera and image
+        * coordinates when available; otherwise center_of_mass_valid is 0 and the COM fields are zero.
+        * \param[in] index - zero-based index of the detection
+        * \return rs2_object_detection - the detection at the specified index
+        */
+        rs2_object_detection get_detection(unsigned int index) const
+        {
+            rs2_object_detection detection;
+            rs2_error* e = nullptr;
+            rs2_get_frame_object_detection(get(), index, &detection, &e);
+            error::handle(e);
+            return detection;
+        }
+    };
+
     class frameset : public frame
     {
     public:
         /**
-        * Inherit frame class with additional frameset related attributs/functions
+        * Extends the frame class with additional frameset related attributes and functions
         */
         frameset() :_size(0) {};
         /**
-        * Inherit frame class with additional frameset related attributs/functions
+        * Extends the frame class with additional frameset related attributes and functions
         * \param[in] frame - existing frame instance
         */
         frameset(const frame& f)
@@ -853,14 +1241,13 @@ namespace rs2
 
             if (get())
             {
-                rs2_error* e = nullptr;
                 _size = rs2_embedded_frames_count(get(), &e);
                 error::handle(e);
             }
         }
 
         /**
-        * Retrieve back the first frame of specific stream and format types, if no frame found, return the default one(frame instance)
+        * Retrieve the first frame of a specific stream and optionally with a specific format. If no frame is found, return an empty frame instance.
         * \param[in] rs2_stream s - frame to be retrieved from this stream type.
         * \param[in] rs2_format f - frame to be retrieved from this format type.
         * \return frame - first found frame with s stream type.
@@ -868,29 +1255,29 @@ namespace rs2
         frame first_or_default(rs2_stream s, rs2_format f = RS2_FORMAT_ANY) const
         {
             frame result;
-            foreach([&result, s, f](frame frame) {
-                if (!result && frame.get_profile().stream_type() == s && (f == RS2_FORMAT_ANY || f == frame.get_profile().format()))
+            foreach_rs([&result, s, f](frame frm) {
+                if (!result && frm.get_profile().stream_type() == s && (f == RS2_FORMAT_ANY || f == frm.get_profile().format()))
                 {
-                    result = std::move(frame);
+                    result = std::move(frm);
                 }
             });
             return result;
         }
         /**
-        * Retrieve back the first frame of specific stream type, if no frame found, error will be thrown
+        * Retrieve the first frame of a specific stream type and optionally with a specific format. If no frame is found, an error will be thrown.
         * \param[in] rs2_stream s - frame to be retrieved from this stream type.
         * \param[in] rs2_format f - frame to be retrieved from this format type.
         * \return frame - first found frame with s stream type.
         */
         frame first(rs2_stream s, rs2_format f = RS2_FORMAT_ANY) const
         {
-            auto frame = first_or_default(s, f);
-            if (!frame) throw error("Frame of requested stream type was not found!");
-            return frame;
+            auto frm = first_or_default(s, f);
+            if (!frm) throw error("Frame of requested stream type was not found!");
+            return frm;
         }
 
         /**
-        * Retrieve back the first depth framee, if no frame found, return the default one(frame instance)
+        * Retrieve the first depth frame, if no frame is found, return an empty frame instance.
         * \return depth_frame - first found depth frame.
         */
         depth_frame get_depth_frame() const
@@ -899,23 +1286,41 @@ namespace rs2
             return f.as<depth_frame>();
         }
         /**
-        * Retrieve back the first color frame, if no frame found, search the color frame from IR stream. If still can't find, return the default one(frame instance)
+        * Retrieve the first color frame, if no frame is found, search for the color frame from IR stream. If one still can't be found, return an empty frame instance.
         * \return video_frame - first found color frame.
         */
-        video_frame get_color_frame() const
+        video_frame get_color_frame( const size_t index = 0 ) const
         {
-            auto f = first_or_default(RS2_STREAM_COLOR);
+            frame f;
 
-            if (!f)
+            foreach_rs( [&f, index]( const frame & frm ) {
+                if( !f && frm.get_profile().stream_type() == RS2_STREAM_COLOR &&
+                          frm.get_profile().stream_index() == index )
+                    f = frm;
+            } );
+
+            if( ! f )
             {
-                auto ir = first_or_default(RS2_STREAM_INFRARED);
-                if (ir && ir.get_profile().format() == RS2_FORMAT_RGB8)
-                    f = ir;
+                // Color frame can also come from infrared sensor
+                foreach_rs( [&f, index]( const frame & frm ) {
+                    if( !f && frm.get_profile().stream_type() == RS2_STREAM_INFRARED &&
+                              frm.get_profile().stream_index() == index &&
+                              frm.get_profile().format() == RS2_FORMAT_RGB8 )
+                        f = frm;
+                } );
             }
+
             return f;
         }
+
+        labeled_points get_labeled_point_cloud_frame() const
+        {
+            auto f = first_or_default(RS2_STREAM_LABELED_POINT_CLOUD);
+
+            return f.as<labeled_points>();
+        }
         /**
-        * Retrieve back the first infrared frame, return the default one(frame instance)
+        * Retrieve the first infrared frame, if no frame is found, return an empty frame instance.
         * \param[in] size_t index
         * \return video_frame - first found infrared frame.
         */
@@ -928,13 +1333,81 @@ namespace rs2
             }
             else
             {
-                foreach([&f, index](const frame& frame) {
-                    if (frame.get_profile().stream_type() == RS2_STREAM_INFRARED && frame.get_profile().stream_index() == index)
-                        f = frame;
+                foreach_rs([&f, index](const frame& frm) {
+                    if( !f && frm.get_profile().stream_type() == RS2_STREAM_INFRARED &&
+                              frm.get_profile().stream_index() == index )
+                        f = frm;
                 });
             }
             return f;
         }
+
+        /**
+        * Retrieve the fisheye monochrome video frame
+        * \param[in] size_t index
+        * \return video_frame - the fisheye frame denoted by index.
+        */
+        video_frame get_fisheye_frame(const size_t index = 0) const
+        {
+            frame f;
+            if (!index)
+            {
+                f = first_or_default(RS2_STREAM_FISHEYE);
+            }
+            else
+            {
+                foreach_rs([&f, index](const frame& frm) {
+                    if (frm.get_profile().stream_type() == RS2_STREAM_FISHEYE &&
+                        frm.get_profile().stream_index() == index) f = frm;
+                });
+            }
+            return f;
+        }
+
+        /**
+        * Retrieve the pose frame
+        * \param[in] size_t index
+        * \return pose_frame - the sensor's positional data
+        */
+        pose_frame get_pose_frame(const size_t index = 0) const
+        {
+            frame f;
+            if (!index)
+            {
+                f = first_or_default(RS2_STREAM_POSE);
+            }
+            else
+            {
+                foreach_rs([&f, index](const frame& frm) {
+                    if (frm.get_profile().stream_type() == RS2_STREAM_POSE &&
+                        frm.get_profile().stream_index() == index) f = frm;
+                });
+            }
+            return f.as<pose_frame>();
+        }
+
+        /**
+        * Retrieve the object detection frame
+        * \param[in] size_t index
+        * \return object_detection_frame - the detected objects data
+        */
+        object_detection_frame get_object_detection_frame(const size_t index = 0) const
+        {
+            frame f;
+            if (!index)
+            {
+                f = first_or_default(RS2_STREAM_OBJECT_DETECTION);
+            }
+            else
+            {
+                foreach_rs([&f, index](const frame& frm) {
+                    if (frm.get_profile().stream_type() == RS2_STREAM_OBJECT_DETECTION &&
+                        frm.get_profile().stream_index() == index) f = frm;
+                });
+            }
+            return f.as<object_detection_frame>();
+        }
+
         /**
         * Return the size of the frameset
         * \return size_t - frameset size.
@@ -945,11 +1418,11 @@ namespace rs2
         }
 
         /**
-        * Template function, extract internal frame handle from the frameset and invoke the action function
+        * Template function, extract internal frame handles from the frameset and invoke the action function
         * \param[in] action - instance with () operator implemented will be invoke after frame extraction.
         */
         template<class T>
-        void foreach(T action) const
+        void foreach_rs(T action) const
         {
             rs2_error* e = nullptr;
             auto count = size();
@@ -982,6 +1455,14 @@ namespace rs2
         class iterator
         {
         public:
+            // inheriting from std::iterator template is deprecated in C++17, this is the new way to define an iterator
+            // go to https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/ for more info
+            using iterator_category = std::forward_iterator_tag;
+            using value_type = frame;
+            using difference_type = std::ptrdiff_t;
+            using pointer = frame*;
+            using reference = frame&;
+
             iterator(const frameset* owner, size_t index = 0) : _index(index), _owner(owner) {}
             iterator& operator++() { ++_index; return *this; }
             bool operator==(const iterator& other) const { return _index == other._index; }
@@ -999,6 +1480,19 @@ namespace rs2
         size_t _size;
     };
 
+    template<class T>
+    class frame_callback : public rs2_frame_callback
+    {
+        T on_frame_function;
+    public:
+        explicit frame_callback(T on_frame) : on_frame_function(on_frame) {}
 
+        void on_frame(rs2_frame* fref) override
+        {
+            on_frame_function(frame{ fref });
+        }
+
+        void release() override { delete this; }
+    };
 }
 #endif // LIBREALSENSE_RS2_FRAME_HPP
